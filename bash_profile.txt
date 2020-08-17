@@ -1,0 +1,67 @@
+export PATH=/usr/local/bin:$PATH export PATH=/usr/local/bin:$PATH export PATH=/usr/local/bin:$PATH export PATH=/usr/local/bin:$PATH
+export PATH=/usr/local/bin:$PATH
+
+# System-wide .bashrc file for interactive bash(1) shells.
+if [ -n "$PS1" ]; then PS1='\h:\w \u\$ '; fi
+# Make bash check it's window size after a process completes
+shopt -s checkwinsize
+alias vi=vim
+function _git_prompt() {
+local _branch=`git branch --no-color 2> /dev/null | sed -ne 's/^* //p'`
+[[ -z $_branch ]] && return
+local _bgcolor
+local _color
+for s in `git status --porcelain | tr ' ' '.' | cut -c 1-2`; do
+    if [ -z "$_color" ]; then
+        case "$s" in
+            ?D) _color='\e[35m' ;;
+        ?M) _color='\e[36m' ;;
+    \?\?) _color='\e[33m' ;;
+esac
+fi
+if [ -z "$_bgcolor" ]; then
+    case $s in
+        A?) _bgcolor='\e[43m' ;;
+    D?) _bgcolor='\e[41m' ;;
+M?) _bgcolor='\e[44m' ;;
+esac
+fi
+done
+# Highligh it we haven't done a git pull today
+local now=`date +%s`
+local last_pull=0
+local fetch_head=$( git rev-parse --show-toplevel )/.git/FETCH_HEAD
+[ -e $fetch_head ] && last_pull=`stat -f %m $fetch_head`
+age=$(( $now - $last_pull ))
+if [ $age -gt 86400 ]; then
+    _color='\x1b[5m'$_color
+fi
+_color=${_color:-'\e[32m'}
+#_bgcolor=${_bgcolor:-'\e[42m'}
+echo -en "\[\e[0m\]{\[$_bgcolor$_color\]${_branch}\[\e[0m\]}"
+}
+function prompt
+{
+    local WHITE="\[\033[1;37m\]"
+    local GREEN="\[\033[0;32m\]"
+    local CYAN="\[\033[0;36m\]"
+    local GRAY="\[\033[0;37m\]"
+    local BLUE="\[\033[0;34m\]"
+    local VENV=""
+    if [ "$VIRTUAL_ENV" ]; then
+        VENV="($(basename $VIRTUAL_ENV)) "
+    fi
+    export PS1="${GREEN}\u${CYAN} $(_git_prompt)${CYAN}\w${GRAY}${VENV}$ "
+}
+PROMPT_COMMAND=prompt
+source /usr/local/etc/bash_completion.d/git-completion.bash
+export PATH=/usr/local/bin:$PATH
+export PATH=/usr/local/bin:$PATH
+source /usr/local/opt/chruby/share/chruby/chruby.sh
+source /usr/local/opt/chruby/share/chruby/auto.sh
+source /usr/local/share/chruby/chruby.sh
+chruby ruby-2.6.5
+
+export PGDATA=/usr/local/var/postgres
+export PGHOST=/tmp
+
